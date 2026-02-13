@@ -1,3 +1,5 @@
+BIG THANKS for Cursor with claude-4.6-opus-max
+
 # T4i New Hire Data Sync
 
 Automated Google Apps Script pipeline that consolidates **T4i new hire onboarding records** from a 510-tab Google Spreadsheet into a single, clean, QlikSense-ready sheet — updated automatically twice daily.
