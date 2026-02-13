@@ -1,0 +1,4 @@
+# Sensitive data - DO NOT push to GitHub
+*.csv
+betterworks_goal.txt
+slack_announcement.txt
