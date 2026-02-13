@@ -37,7 +37,7 @@ T4i New Hire List (510 tabs)
 | Metric | Value |
 |--------|-------|
 | Source tabs | 510 (448 matched) |
-| Rows synced | 29,865 |
+| Rows synced | 30,000+ | (02/13/2026 6AM EST)
 | Date range | Jan 2021 – Feb 2026 |
 | Auto-sync | Daily at 6 AM + 8 PM ET |
 | Daily sync time | ~1-2 minutes |
@@ -50,7 +50,6 @@ T4i New Hire List (510 tabs)
 | `v6_Code.gs` | **Production code** (latest version) |
 | `v1_Code.gs` – `v5_Code.gs` | Version history |
 | [`en/README.md`](en/README.md) | Full English documentation (architecture, column spec, function reference) |
-| [`zh-cn/README.md`](zh-cn/README.md) | Full Chinese documentation |
 
 
 ---
