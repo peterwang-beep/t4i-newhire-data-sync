@@ -13,8 +13,6 @@
 //   BUG-4 [MINOR]   hasIrregularDate_() now rejects dates outside 2000-2030.
 //   BUG-5 [MINOR]   sortAndFormatSheet_ now also sets Source Tab to plain text.
 //   NEW:  cleanupDuplicates() removes accumulated duplicate rows.
-//   FIX:  Dedup key now includes Username to prevent false dedup of
-//         different people with empty First/Last Name fields.
 // ================================================================
 
 // ============ Configuration ============
