@@ -13,6 +13,8 @@
 //   BUG-4 [MINOR]   hasIrregularDate_() now rejects dates outside 2000-2030.
 //   BUG-5 [MINOR]   sortAndFormatSheet_ now also sets Source Tab to plain text.
 //   NEW:  cleanupDuplicates() removes accumulated duplicate rows.
+//   FIX:  Dedup key now includes Username to prevent false dedup of
+//         different people with empty First/Last Name fields.
 // ================================================================
 
 // ============ Configuration ============
@@ -61,6 +63,7 @@ var START_DATE_IDX = 0;
 var SHIP_DATE_IDX = 1;
 var FIRST_NAME_IDX = 2;
 var LAST_NAME_IDX = 3;
+var USERNAME_IDX = 5;
 var HIRE_TYPE_IDX = 7;
 var SOURCE_TAB_IDX = OUTPUT_HEADERS.length - 1; // 18 (0-based), 19 (1-based)
 
@@ -354,7 +357,8 @@ function cleanupIrregularDates() {
 }
 
 // NEW in v8: Remove duplicate rows accumulated from the Source Tab formatting bug.
-// Dedup key: First Name + Last Name + Start Date + Hire Type + Source Tab
+// Dedup key: First Name + Last Name + Username + Start Date + Hire Type + Source Tab
+// Username is critical — many early rows have empty First/Last Name but unique Usernames.
 // Keeps only the first occurrence of each unique combination.
 function cleanupDuplicates() {
   var destSS = SpreadsheetApp.openById(DEST_SPREADSHEET_ID);
@@ -371,12 +375,13 @@ function cleanupDuplicates() {
   for (var i = 0; i < data.length; i++) {
     var firstName = String(data[i][FIRST_NAME_IDX] || '').trim();
     var lastName = String(data[i][LAST_NAME_IDX] || '').trim();
+    var username = String(data[i][USERNAME_IDX] || '').trim();
     var startDate = parseDate_(data[i][START_DATE_IDX]);
     var startStr = startDate ? startDate.toDateString() : '';
     var hireType = String(data[i][HIRE_TYPE_IDX] || '').trim();
     var sourceTab = normalizeSourceTab_(data[i][SOURCE_TAB_IDX]);
 
-    var key = firstName + '|' + lastName + '|' + startStr + '|' + hireType + '|' + sourceTab;
+    var key = firstName + '|' + lastName + '|' + username + '|' + startStr + '|' + hireType + '|' + sourceTab;
 
     if (seen[key]) {
       removed++;
