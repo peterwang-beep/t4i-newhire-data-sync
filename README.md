@@ -7,9 +7,11 @@ Automated Google Apps Script pipeline that consolidates **T4i new hire onboardin
 ## What It Does
 
 - Scans **510 source tabs** in the T4i New Hire List, matches **448 tabs** with relevant columns
-- Consolidates **29,865 historical records** (Jan 2021 – Feb 2026) into one unified sheet
+- Consolidates **30,000+ historical records** (Jan 2021 – present) into one unified sheet
 - Runs **incremental daily sync** at 6:00 AM and 8:00 PM ET (only re-processes last 6 weeks)
-- Filters out empty rows, future-dated entries, and pre-2021 data automatically
+- Filters out empty rows, future-dated entries, pre-2021 data, and irregular dates ("TBD", "N/A") automatically
+- Prevents Source Tab column auto-formatting with enforced plain text format
+- Normalizes all dates to midnight to eliminate hidden time component issues
 - Tracks data origin with a "Source Tab" column for full traceability
 - Output is formatted and ready for direct **QlikSense** loading
 
@@ -19,14 +21,15 @@ Automated Google Apps Script pipeline that consolidates **T4i new hire onboardin
 T4i New Hire List (510 tabs)
         │
         ▼
-  Google Apps Script
-  ├── fullSync()         → Batch initial load (all historical data)
-  ├── syncNewHireData()  → Daily incremental sync (last 6 weeks)
-  ├── discoverTabs()     → Scan & report tab structure
+  Google Apps Script (v8)
+  ├── fullSync()           → Batch initial load (all historical data)
+  ├── syncNewHireData()    → Daily incremental sync (last 6 weeks)
+  ├── cleanupDuplicates()  → Remove duplicate rows
+  ├── discoverTabs()       → Scan & report tab structure
   └── setupDailyTriggers() → Auto-schedule (6am + 8pm ET)
         │
         ▼
-  newHireAutoSyncData (single sheet, 29,865 rows, 19 columns)
+  newHireAutoSyncData (single sheet, 30K+ rows, 19 columns)
         │
         ▼
   QlikSense / Analytics
@@ -37,21 +40,34 @@ T4i New Hire List (510 tabs)
 | Metric | Value |
 |--------|-------|
 | Source tabs | 510 (448 matched) |
-| Rows synced | 30,000+ | (02/13/2026 6AM EST)
-| Date range | Jan 2021 – Feb 2026 |
+| Rows synced | 30,000+ |
+| Date range | Jan 2021 – present |
 | Auto-sync | Daily at 6 AM + 8 PM ET |
 | Daily sync time | ~1-2 minutes |
-| Code versions | v1 through v6 |
+| Production code | v8 |
 
 ## Project Files
 
 | File | Description |
 |------|-------------|
-| `v6_Code.gs` | **Production code** (latest version) |
-| `v1_Code.gs` – `v5_Code.gs` | Version history |
+| `v8_Code.gs` | **Production code** (latest — data integrity fixes) |
+| `v7_Code.gs` | Added irregular date filter |
+| `v6_Code.gs` | Performance fix (Range.sort) |
+| `v1_Code.gs` – `v5_Code.gs` | Earlier version history |
 | [`en/README.md`](en/README.md) | Full English documentation (architecture, column spec, function reference) |
+| [`FUNCTION_GUIDE.md`](FUNCTION_GUIDE.md) | Function usage guide for daily operations |
 
+## v8 Key Fixes (Feb 16, 2026)
+
+| Bug | Severity | Fix |
+|-----|----------|-----|
+| Source Tab auto-formatting caused infinite row duplication | CRITICAL | Enforced plain text format + robust comparison with `normalizeSourceTab_()` |
+| Date columns retained hidden time components | MODERATE | Normalized to midnight in `processSheet_()` |
+| Cleanup functions lost column formatting after rewrite | MODERATE | Centralized writes via `writeDestData_()` |
+| `hasIrregularDate_()` missed edge cases | MINOR | Added year range validation (2000-2030) |
+| `sortAndFormatSheet_` did not protect Source Tab format | MINOR | Added `@` format enforcement after sort |
+| No way to remove accumulated duplicates | NEW | Added `cleanupDuplicates()` function |
 
 ---
 
-*Built by Peter Wang | T4i Care East | February 12, 2026*
+*Built by Peter Wang | T4i Care East | Started February 12, 2026*
