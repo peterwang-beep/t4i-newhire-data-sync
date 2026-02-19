@@ -21,10 +21,11 @@ Automated Google Apps Script pipeline that consolidates **T4i new hire onboardin
 T4i New Hire List (510 tabs)
         │
         ▼
-  Google Apps Script (v9)
+  Google Apps Script (v8 Optimized)
   ├── fullSync()           → Batch initial load (all historical data)
   ├── syncNewHireData()    → Daily incremental sync (last 6 weeks)
-  ├── cleanupDuplicates()  → Remove duplicate rows
+  ├── cleanupDuplicates()  → Remove duplicate rows (with removed-row log)
+  ├── recall()             → Undo last sync/cleanup operation
   ├── discoverTabs()       → Scan & report tab structure
   └── setupDailyTriggers() → Auto-schedule (6am + 8pm ET)
         │
@@ -44,13 +45,14 @@ T4i New Hire List (510 tabs)
 | Date range | Jan 2021 – present |
 | Auto-sync | Daily at 6 AM + 8 PM ET |
 | Daily sync time | ~1-2 minutes |
-| Production code | v9 |
+| Production code | v8_Optimized |
 
 ## Project Files
 
 | File | Description |
 |------|-------------|
-| `v9_Code.gs` | **Production code** (latest — validation rules, skip logging, improved dedup) |
+| `v8_Optimized.gs` | **Production code** (Recall/Undo, dedup log, empty-date filter, canonical Source Tab) |
+| `v9_Code.gs` | Validation rules, skip logging, improved dedup |
 | `v8_Code.gs` | Data integrity fixes (Source Tab format, dedup key) |
 | `v7_Code.gs` | Added irregular date filter |
 | `v6_Code.gs` | Performance fix (Range.sort) |
@@ -58,14 +60,15 @@ T4i New Hire List (510 tabs)
 | [`en/README.md`](en/README.md) | Full English documentation (architecture, column spec, function reference) |
 | [`FUNCTION_GUIDE.md`](FUNCTION_GUIDE.md) | Function usage guide for daily operations |
 
-## v9 Key Changes (Feb 2026)
+## v8_Optimized Key Changes (Feb 2026)
 
 | Change | Description |
 |--------|--------------|
-| **Two-part validation** | Part A: Start/Ship Date at least one non-empty; Part B: Last Name, Full name, or Username at least one non-empty |
-| **Bad date format filter** | Skips rows with `7//22/2025`, `10/12.2021`, `3/3/3035` (double slash, dot separator, year out of range) |
-| **Skip logging** | Per-sheet counts and examples for skipped rows (noDate, badFmt, noIdentity, tooOld, future) |
-| **Improved dedup key** | `cleanupDuplicates` now includes Ship Date in key to avoid false deduplication |
+| **Recall (Undo)** | `recall()` restores destination sheet to state before last sync/cleanup. Snapshot saved automatically before each destructive operation. |
+| **cleanupDuplicates log** | Logs up to 30 removed rows (First+Last, Username, Start/Ship Date, Source Tab) for audit. |
+| **Empty-date filter** | `cleanupIrregularDates()` now removes rows where both Start Date and Ship Date are empty. |
+| **Canonical Source Tab** | Dedup uses `canonicalSourceTabForDedup_()` to collapse tab name variants (e.g. "February 16 2026" ↔ "2/16/2026"). |
+| **Auto-dedup** | `fullSync` and `syncNewHireData` automatically run `cleanupDuplicates()` at the end. |
 
 ## v8 Key Fixes (Feb 16, 2026)
 

@@ -125,8 +125,9 @@ Located at the top of `Code.gs`:
 | `discoverTabs()` | Scans source spreadsheet and reports which tabs match the target columns. | Run when tabs are added/removed/renamed in the source. |
 | `runSortAndFormat()` | Sorts existing destination data by Start Date/Ship Date and applies date formatting. | Run if data needs re-sorting after manual edits. |
 | `cleanupOldData()` | Removes rows with dates before `EARLIEST_YEAR` from the destination. | Run after fullSync if pre-2021 data leaked through. |
-| `cleanupIrregularDates()` | Removes rows with non-date or malformed date values (TBD, 7//22/2025, etc.). | Run when irregular dates appear in the destination. |
-| `cleanupDuplicates()` | Removes duplicate rows by key: First+Last+Username+Start+Ship+HireType+SourceTab. | Run when duplicates accumulate from sync cycles. |
+| `cleanupIrregularDates()` | Removes rows with non-date or malformed date values (TBD, 7//22/2025, etc.). Also removes rows where both Start and Ship Date are empty. | Run when irregular dates appear in the destination. |
+| `cleanupDuplicates()` | Removes duplicate rows by key: First+Last+Username+Start+Ship+HireType+SourceTab. Logs up to 30 removed rows for audit. | Run when duplicates accumulate from sync cycles. |
+| `recall()` | Restores destination sheet to state before last sync/cleanup (single-step undo). | Run after mistakenly running a sync or cleanup. |
 | `setupDailyTriggers()` | Creates two time-based triggers: 6am ET and 8pm ET daily. | Run once after initial setup. |
 | `removeDailyTriggers()` | Removes only the daily sync triggers. | Run to pause automatic syncing. |
 | `removeTriggers()` | Removes ALL project triggers (daily + continuation). | Emergency stop. |
@@ -155,6 +156,7 @@ Located at the top of `Code.gs`:
 | v7 | Feb 2026 | Added `hasIrregularDate_()` to skip non-date text (TBD, N/A); added `cleanupIrregularDates()` |
 | v8 | Feb 16, 2026 | Source Tab plain text enforcement; date normalization to midnight; `writeDestData_()`; `cleanupDuplicates()` with Username in dedup key |
 | v9 | Feb 2026 | Two-part validation (date + identity); bad date format filter; per-sheet skip logging; Ship Date added to dedup key |
+| v8_Optimized | Feb 2026 | `recall()` undo; cleanupDuplicates removed-row log; empty-date filter; canonical Source Tab for dedup; auto-dedup after sync |
 
 ## Project Stats
 
