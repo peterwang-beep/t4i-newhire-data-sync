@@ -71,8 +71,9 @@ flowchart LR
 | **Incremental Daily Sync** | Only re-processes tabs from the last 6 weeks. Preserves historical data already in the destination. Completes in 1-2 minutes. |
 | **Smart Tab Detection** | Parses year from tab names (e.g., "Week of Jan 11 21" → 2021). Skips tabs before `EARLIEST_YEAR`. Tabs without parseable years are included as a safety net. |
 | **Data-Level Date Filter** | Skips rows where all available dates are in the future (not yet actionable). Also filters out rows with dates before `EARLIEST_YEAR`. |
-| **Key Field Validation** | Requires at least one of: First Name, Last Name, Full Name, Username, Start Date, or Ship Date to be non-empty. Eliminates blank/junk rows. |
-| **Duplicate Detection** | Tracks potential duplicates using Full Name + Start Date + Hire Type. Reports duplicate groups in the execution log. |
+| **Key Field Validation (v9)** | Two-part: (A) Start Date or Ship Date must have at least one non-empty; (B) Last Name, Full name, or Username must have at least one non-empty. Eliminates blank/junk rows. |
+| **Bad Date Format Filter (v9)** | Skips rows with malformed dates: double slash (`7//22/2025`), dot separator (`10/12.2021`), year outside 2000-2030 (`3/3/3035`). Logs skip counts and examples per sheet. |
+| **Duplicate Detection** | `cleanupDuplicates()` uses key: First Name + Last Name + Username + Start Date + Ship Date + Hire Type + Source Tab. Keeps first occurrence, removes later duplicates. |
 | **Source Tab Tracking** | Appends a "Source Tab" column to every row, enabling traceability back to the original source tab. |
 | **QlikSense-Ready Output** | Frozen header row, consistent date formatting (M/d/yyyy), single-sheet layout optimized for direct QlikSense loading. |
 
@@ -113,6 +114,7 @@ Located at the top of `Code.gs`:
 | `EARLIEST_YEAR` | `2021` | Only process tabs/data from this year onward |
 | `BATCH_SIZE` | `150` | Number of tabs to process per fullSync batch |
 | `LOOKBACK_WEEKS` | `6` | How many weeks back the daily incremental sync looks |
+| `SKIP_LOG_MAX` | `10` | Max number of skip examples to log per reason per sheet (v9) |
 
 ## Function Reference
 
@@ -123,6 +125,8 @@ Located at the top of `Code.gs`:
 | `discoverTabs()` | Scans source spreadsheet and reports which tabs match the target columns. | Run when tabs are added/removed/renamed in the source. |
 | `runSortAndFormat()` | Sorts existing destination data by Start Date/Ship Date and applies date formatting. | Run if data needs re-sorting after manual edits. |
 | `cleanupOldData()` | Removes rows with dates before `EARLIEST_YEAR` from the destination. | Run after fullSync if pre-2021 data leaked through. |
+| `cleanupIrregularDates()` | Removes rows with non-date or malformed date values (TBD, 7//22/2025, etc.). | Run when irregular dates appear in the destination. |
+| `cleanupDuplicates()` | Removes duplicate rows by key: First+Last+Username+Start+Ship+HireType+SourceTab. | Run when duplicates accumulate from sync cycles. |
 | `setupDailyTriggers()` | Creates two time-based triggers: 6am ET and 8pm ET daily. | Run once after initial setup. |
 | `removeDailyTriggers()` | Removes only the daily sync triggers. | Run to pause automatic syncing. |
 | `removeTriggers()` | Removes ALL project triggers (daily + continuation). | Emergency stop. |
@@ -148,6 +152,9 @@ Located at the top of `Code.gs`:
 | v4 | Feb 12, 2026 | Fixed `getUi()` error for standalone scripts; added `EARLIEST_YEAR` tab name filter |
 | v5 | Feb 12, 2026 | Added incremental sync architecture (`fullSync` + `syncNewHireData`); batch processing with auto-continuation; `LOOKBACK_WEEKS` for daily sync |
 | v6 | Feb 12, 2026 | Fixed sort timeout: replaced JavaScript read-sort-write with `Range.sort()`; added data-level date filter; added `cleanupOldData()` and `runSortAndFormat()` |
+| v7 | Feb 2026 | Added `hasIrregularDate_()` to skip non-date text (TBD, N/A); added `cleanupIrregularDates()` |
+| v8 | Feb 16, 2026 | Source Tab plain text enforcement; date normalization to midnight; `writeDestData_()`; `cleanupDuplicates()` with Username in dedup key |
+| v9 | Feb 2026 | Two-part validation (date + identity); bad date format filter; per-sheet skip logging; Ship Date added to dedup key |
 
 ## Project Stats
 

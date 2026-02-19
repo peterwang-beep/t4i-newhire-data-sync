@@ -1,4 +1,4 @@
-# T4i New Hire Data Sync — Function Usage Guide (v8)
+# T4i New Hire Data Sync — Function Usage Guide (v9)
 
 ## Fully Automatic (No Action Needed)
 
@@ -10,10 +10,10 @@
 
 | Function | When to Use | How to Run |
 |----------|-------------|------------|
-| `cleanupDuplicates()` | When you notice the same person appearing multiple times with the same Start Date and Source Tab | Select from function dropdown → Click Run → Check Log for removed count. Dedup key: First Name + Last Name + Start Date + Hire Type + Source Tab. |
+| `cleanupDuplicates()` | When you notice the same person appearing multiple times with the same Start Date, Ship Date, and Source Tab | Select from function dropdown → Click Run → Check Log for removed count. **v9 dedup key**: First Name + Last Name + Username + Start Date + **Ship Date** + Hire Type + Source Tab. |
 | `discoverTabs()` | When you suspect source tabs were added/removed and want to confirm which tabs are in sync scope | Select from function dropdown → Click Run → Check Execution Log |
 | `runSortAndFormat()` | After you manually edited data in the destination sheet and want to re-sort. Also re-enforces date and Source Tab column formats. | Select from function dropdown → Click Run |
-| `cleanupIrregularDates()` | When you notice rows with "TBD", "N/A", or other non-date text in the Start Date or Ship Date columns. Also catches dates outside the 2000-2030 range. | Select from function dropdown → Click Run → Check Log to confirm how many rows were removed |
+| `cleanupIrregularDates()` | When you notice rows with "TBD", "N/A", or other non-date text in Start/Ship Date. **v9**: Also catches `7//22/2025`, `10/12.2021`, `3/3/3035` (double slash, dot separator, year out of 2000-2030). | Select from function dropdown → Click Run → Check Log to confirm how many rows were removed |
 | `cleanupOldData()` | When you find pre-2021 data that leaked into the destination sheet | Select from function dropdown → Click Run |
 
 ## Rarely Needed (Special Situations Only)
@@ -32,8 +32,9 @@
 - **Want to check status** — Run `discoverTabs()` or visit the Executions page in Apps Script to review logs.
 - **Disaster recovery** — Run `resetFullSync()` → `fullSync()` to rebuild all data from scratch.
 
-## v8 Data Integrity Notes
+## v9 Validation & Data Notes
 
-- **Source Tab column** is now enforced as plain text format. This prevents Google Sheets from auto-converting tab names like "February 16 2026" into date values, which previously caused duplicate rows to accumulate with every sync cycle.
-- **Date columns** (Start Date, Ship Date) are normalized to midnight when synced. This eliminates hidden time components from source data that could cause inconsistent sorting.
-- **All write operations** now use a shared `writeDestData_()` helper that enforces correct column formats every time, ensuring no format drift after cleanup or sync operations.
+- **Two-part row validation**: (A) Start Date and Ship Date must have at least one non-empty; (B) Last Name, Full name, or Username must have at least one non-empty. Rows failing either part are skipped.
+- **Bad date format rejection**: Rows with `7//22/2025`, `10/12.2021`, `3/3/3035`, or similar malformed dates are skipped. Execution logs show counts and up to 10 examples per reason (noDate, badFmt, noIdentity, tooOld, future).
+- **Improved dedup key**: `cleanupDuplicates` now includes Ship Date, so same person + same Start + same Ship + same tab = duplicate. Different Ship Dates are no longer collapsed.
+- **Source Tab column** remains plain text format. **Date columns** are normalized to midnight. **All write operations** use `writeDestData_()` for consistent formatting.
